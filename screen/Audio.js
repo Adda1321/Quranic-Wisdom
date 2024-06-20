@@ -23,7 +23,6 @@ const Audio = ({navigation}) => {
       .then(data => data.data);
 
     const d = res.filter(item => item.format == 'audio');
-
     setQuranArr(d);
     setLoading(false);
   };
@@ -46,9 +45,7 @@ const Audio = ({navigation}) => {
         ) : (
           <FlatList
             data={quranArr}
-            keyExtractor={(item, index) => {
-              item.name;
-            }}
+            keyExtractor={(item, index) => index}
             renderItem={({item, index}) => (
               <View style={styles.container1}>
                 <TouchableOpacity

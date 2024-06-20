@@ -52,8 +52,9 @@ const Quran = ({route, navigation}) => {
                 <TouchableOpacity
                   onPress={() => {
                     navigation.navigate('Surah', {
-                      item: item.number,
+                      ayatNumber: item.number,
                       name: item.name,
+                      personName: name,
                       id: identifier,
                       check: type,
                     });

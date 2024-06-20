@@ -11,8 +11,7 @@ import {
 import Header from '../component/Header';
 import styles from '../style/styles';
 const Surah = ({route, navigation}) => {
-  const {item, name, id, check} = route.params;
-
+  const {ayatNumber, name, id, check , personName} = route.params;
   const [ayah, setAyah] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   React.useEffect(() => {
@@ -20,26 +19,13 @@ const Surah = ({route, navigation}) => {
   }, []);
   const getEdition = async () => {
     setLoading(true);
-    const ayahs = await fetch(`http://api.alquran.cloud/v1/surah/${item}/${id}`)
+    const ayahs = await fetch(`http://api.alquran.cloud/v1/surah/${ayatNumber}/${id}`)
       .then(response => response.json())
       .then(data => data.data.ayahs);
     setAyah(ayahs);
     setLoading(false);
   };
 
-  const play = url => {
-    console.log('URL MAIN=================>', url);
-
-    // navigation.navigate('SurahPlayer', {
-    //   item: 'Addaaa',
-    // });
-    //     try {
-    //       // play the file tone.mp3
-    //       SoundPlayer.playUrl(url);
-    //     } catch (e) {
-    //       console.log(`cannot play the sound file`, e);
-    //     }
-  };
 
   return (
     <SafeAreaView>
@@ -69,14 +55,14 @@ const Surah = ({route, navigation}) => {
                 {check == 'audio' ? (
                   <TouchableOpacity
                   onPress={() => {
-    console.log('URL MAIN=================>', item.audio);
                     
-                    // navigation.navigate('SurahPlayer', {
-                    //   // item: item.number,
-                    //   // name: item.name,
-                    //   // id: identifier,
-                    //   // check: type,
-                    // });
+                    navigation.navigate('SurahPlayer', {
+                      audio: item.audio,
+                      item: item,
+                      name: name,
+                      personName,
+                      ayatNumber
+                    });
                   }}
                   >
                     <Image source={require('../assest/audio2.png')} />
