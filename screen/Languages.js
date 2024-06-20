@@ -86,9 +86,9 @@ const Languages = ({navigation}) => {
           style={{paddingBottom: 90}}
           ListFooterComponentStyle={{paddingBottom: 200}}
           data={data}
-          keyExtractor={(item, index) => {
-            item.name;
-          }}
+          keyExtractor={(item, index) => 
+            item.name
+          }
           renderItem={({item, index}) => (
             <View style={styles.container1}>
               <TouchableOpacity

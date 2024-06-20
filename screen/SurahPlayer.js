@@ -10,41 +10,27 @@ import {
 import Sound from 'react-native-sound';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Slider from '@react-native-community/slider';
+import {ScrollingText} from '../component/ScrollingText';
 
 const SurahPlayer = ({route, navigation}) => {
-  const {item, audio, name , personName , ayatNumber} = route.params;
+  const {items, name, personName} = route.params; // Assuming 'items' is the array of ayah mp3 links
   const [isLoading, setIsLoading] = useState(true);
   const [playing, setPlaying] = useState(false);
+  const [currentAyahIndex, setCurrentAyahIndex] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [zeroDuration, setZeroDuration] = useState(false);
+  const [ayahNumber, setAyahNumber] = useState(null)
   const soundRef = useRef(null);
+
+
   useEffect(() => {
-    // Initialize the sound
-    Sound.setCategory('Playback');
-    soundRef.current = new Sound(
-      item.audioSecondary[0] || audio,
-      // audio,
-      // "https://cdn.islamic.network/quran/audio/64/ar.abdulbasitmurattal/11.mp3",
-      // 'https://cdn.islamic.network/quran/audio/64/ur.khan/21.mp3',
-      // 'https://cdn.islamic.network/quran/audio/64/ar.minshawimujawwad/4063.mp3',
-      null,
-      error => {
-        if (error) {
-          console.log('Failed to load the sound', error);
-          return;
-        }
-        setIsLoading(false);
-        setDuration(soundRef.current.getDuration());
-        if (!soundRef.current.getDuration()) setZeroDuration(true);
-      },
-    );
+    loadAyah(currentAyahIndex);
 
     // Cleanup
     return () => {
-      soundRef.current.release();
+      soundRef.current?.release();
     };
-  }, []);
+  }, [currentAyahIndex]);
 
   useEffect(() => {
     let interval = null;
@@ -52,6 +38,9 @@ const SurahPlayer = ({route, navigation}) => {
       interval = setInterval(() => {
         soundRef.current.getCurrentTime(time => {
           setCurrentTime(time);
+          if (time >= duration - 1) { // Slight buffer to ensure smooth transition
+            nextAyah();
+          }
         });
       }, 1000);
     } else if (!playing && currentTime !== 0) {
@@ -60,15 +49,39 @@ const SurahPlayer = ({route, navigation}) => {
     return () => clearInterval(interval);
   }, [playing, currentTime]);
 
+  const loadAyah = index => {
+    setIsLoading(true);
+    setAyahNumber(items[index].number)
+    Sound.setCategory('Playback');
+    soundRef.current = new Sound(
+      items[index].audioSecondary[0] || items[index].audio,
+      null,
+      error => {
+        if (error) {
+          console.log('Failed to load the sound', error);
+          return;
+        }
+        setIsLoading(false);
+        setDuration(soundRef.current.getDuration());
+        playSound(); // Autoplay the loaded ayah
+      },
+    );
+  };
+
+  const playSound = () => {
+    soundRef.current.play(success => {
+      if (!success) {
+        console.log('Playback failed due to audio decoding errors');
+      }
+    });
+    setPlaying(true);
+  };
+
   const playPauseHandler = () => {
     if (playing) {
       soundRef.current.pause();
     } else {
-      soundRef.current.play(success => {
-        if (!success) {
-          console.log('Playback failed due to audio decoding errors');
-        }
-      });
+      playSound();
     }
     setPlaying(!playing);
   };
@@ -76,6 +89,22 @@ const SurahPlayer = ({route, navigation}) => {
   const seekHandler = time => {
     soundRef.current.setCurrentTime(time);
     setCurrentTime(time);
+  };
+
+  const nextAyah = () => {
+    if (currentAyahIndex < items.length - 1) {
+      setCurrentAyahIndex(currentAyahIndex + 1);
+      setCurrentTime(0);
+      setPlaying(false);
+    }
+  };
+
+  const prevAyah = () => {
+    if (currentAyahIndex > 0) {
+      setCurrentAyahIndex(currentAyahIndex - 1);
+      setCurrentTime(0);
+      setPlaying(false);
+    }
   };
 
   const forwardHandler = () => {
@@ -106,66 +135,89 @@ const SurahPlayer = ({route, navigation}) => {
         <>
           <View style={styles.imageContainer}>
             <Image
-              source={{
-                uri: 'https://t3.ftcdn.net/jpg/02/69/64/56/360_F_269645677_oAjFKkNrezyIeJ6TmawcwEmERIXlQgi5.jpg',
-              }}
+              source={require('../assest/quran(1).png')}
               style={styles.image}
             />
           </View>
-          <View style={{paddingHorizontal: 30}}>
-
-            <Text style={{color: 'black', fontSize: 20}}>{item.text}, {name}, {personName}, {ayatNumber}</Text>
+          <View style={{
+            paddingHorizontal: 30,
+             flex: 1,
+             justifyContent: 'center',
+             alignItems: 'center',
+             backgroundColor: 'white',
+          }}>
+            <ScrollingText
+              text={` ${ayahNumber} :AyatNumber || ${name} :AyatName || ${personName} :ReciterName`}
+            />
+            <Text style={{color: 'black', fontSize: 20}}>{items[currentAyahIndex].text}</Text>
           </View>
           <View style={styles.controlsContainer}>
             <TouchableOpacity
-              style={styles.button}
+              style={styles.iconButton}
+              onPress={prevAyah}
+              disabled={currentAyahIndex === 0}>
+              <Icon
+                name="step-backward"
+                type="material"
+                size={30}
+                color="black"
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.iconButton}
               onPress={backwardHandler}
-              disabled={zeroDuration}>
+              disabled={currentTime === 0}>
               <Icon
                 name="rotate-left"
                 type="material"
                 size={30}
-                color="white"
+                color="black"
               />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={playPauseHandler}>
+            <TouchableOpacity style={styles.iconButton} onPress={playPauseHandler}>
               <Icon
                 name={playing ? 'pause' : 'play'}
                 type="material"
                 size={30}
-                color="white"
+                color="black"
               />
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.button}
+              style={styles.iconButton}
               onPress={forwardHandler}
-              disabled={zeroDuration}>
+              disabled={currentTime >= duration}>
               <Icon
                 name="rotate-right"
                 type="material"
                 size={30}
-                color="white"
+                color="black"
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={nextAyah}
+              disabled={currentAyahIndex === items.length - 1}>
+              <Icon
+                name="step-forward"
+                type="material"
+                size={30}
+                color="black"
               />
             </TouchableOpacity>
           </View>
-          {!zeroDuration && (
-            <>
-              <Slider
-                style={styles.slider}
-                minimumValue={0}
-                maximumValue={duration}
-                value={currentTime}
-                onSlidingComplete={seekHandler}
-                minimumTrackTintColor="#007BFF"
-                maximumTrackTintColor="#000000"
-                thumbTintColor="#007BFF"
-              />
-
-              <Text style={styles.timeText}>{`${Math.floor(
-                currentTime,
-              )}s / ${Math.floor(duration)}s`}</Text>
-            </>
-          )}
+          <Slider
+            style={styles.slider}
+            minimumValue={0}
+            maximumValue={duration}
+            value={currentTime}
+            onSlidingComplete={seekHandler}
+            minimumTrackTintColor="#007BFF"
+            maximumTrackTintColor="#000000"
+            thumbTintColor="#007BFF"
+          />
+          <Text style={styles.timeText}>{`${Math.floor(
+            currentTime,
+          )}s / ${Math.floor(duration)}s`}</Text>
         </>
       )}
     </View>
@@ -221,14 +273,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     width: '80%',
   },
-  button: {
+  iconButton: {
     margin: 10,
-    padding: 15,
-    backgroundColor: '#007BFF',
-    borderRadius: 50,
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    padding: 10,
   },
   slider: {
     width: '80%',

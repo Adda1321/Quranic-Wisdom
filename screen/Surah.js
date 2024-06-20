@@ -9,9 +9,19 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import Header from '../component/Header';
+import Icon from 'react-native-vector-icons/FontAwesome';
+
 import styles from '../style/styles';
 const Surah = ({route, navigation}) => {
-  const {ayatNumber, name, id, check , personName} = route.params;
+  // const {ayatNumber, name, id, check, personName} = route.params;
+  // console.log('SurahParams=======>', route.params);
+  const {ayatNumber, name, id, check, personName} = {
+    ayatNumber: 1,
+    check: 'audio',
+    id: 'ar.abdulbasitmurattal',
+    name: 'سُورَةُ ٱلْفَاتِحَةِ',
+    personName: 'عبد الباسط عبد الصمد المرتل',
+  };
   const [ayah, setAyah] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
   React.useEffect(() => {
@@ -19,13 +29,15 @@ const Surah = ({route, navigation}) => {
   }, []);
   const getEdition = async () => {
     setLoading(true);
-    const ayahs = await fetch(`http://api.alquran.cloud/v1/surah/${ayatNumber}/${id}`)
+    const ayahs = await fetch(
+      `http://api.alquran.cloud/v1/surah/${ayatNumber}/${id}`,
+    )
       .then(response => response.json())
       .then(data => data.data.ayahs);
+    console.log('ayahs=========>', ayahs);
     setAyah(ayahs);
     setLoading(false);
   };
-
 
   return (
     <SafeAreaView>
@@ -43,34 +55,60 @@ const Surah = ({route, navigation}) => {
             size="large"
           />
         ) : (
-          <FlatList
-            data={ayah}
-            keyExtractor={(item, index) => {
-              return item.number;
-            }}
-            ListFooterComponentStyle={{backgroundColor: 'white'}}
-            renderItem={({item, index}) => (
-              <View key={item.number} style={styles.container1}>
-                <Text style={styles.englishName}>{item.text}</Text>
-                {check == 'audio' ? (
-                  <TouchableOpacity
-                  onPress={() => {
-                    
-                    navigation.navigate('SurahPlayer', {
-                      audio: item.audio,
-                      item: item,
-                      name: name,
-                      personName,
-                      ayatNumber
-                    });
-                  }}
-                  >
-                    <Image source={require('../assest/audio2.png')} />
-                  </TouchableOpacity>
-                ) : null}
-              </View>
-            )}
-          />
+          <>
+          {
+             check == 'audio' &&  (
+          
+            <TouchableOpacity
+              style={{
+                height: 60,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              onPress={() => {
+                navigation.navigate('SurahPlayer', {
+                  items: ayah,
+                  name: name,
+                  personName,
+                });
+              }}
+              >
+              <Text style={{color: 'black', fontWeight: '', fontSize: 25}}>
+                Listen All
+              </Text>
+            </TouchableOpacity>
+             )}
+            <FlatList
+              data={ayah}
+              keyExtractor={(item, index) => {
+                return item.number;
+              }}
+              ListFooterComponentStyle={{backgroundColor: 'white'}}
+              renderItem={({item, index}) => (
+                <View key={item.number} style={styles.container1}>
+                  <Text style={styles.englishName}>{item.text}</Text>
+                  {check == 'audio' ? (
+                    <TouchableOpacity
+                      style={{height: 30}}
+                      onPress={() => {
+                        navigation.navigate('SurahPlayer', {
+                          items: [item],
+                          name: name,
+                          personName,
+                        });
+                      }}>
+                      <Icon
+                        name="volume-up"
+                        type="material"
+                        size={20}
+                        color="black"
+                      />
+                    </TouchableOpacity>
+                  ) : null}
+                </View>
+              )}
+            />
+          </>
         )}
       </View>
     </SafeAreaView>
