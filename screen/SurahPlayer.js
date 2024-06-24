@@ -13,15 +13,20 @@ import Slider from '@react-native-community/slider';
 import {ScrollingText} from '../component/ScrollingText';
 
 const SurahPlayer = ({route, navigation}) => {
-  const {items, name, personName} = route.params; // Assuming 'items' is the array of ayah mp3 links
+  const {
+    items,
+    fullSurahAudioLink,
+    name,
+    personName,
+    isPlayingWholeSurah = false,
+  } = route.params; // Assuming 'items' is the array of ayah mp3 links
   const [isLoading, setIsLoading] = useState(true);
   const [playing, setPlaying] = useState(false);
   const [currentAyahIndex, setCurrentAyahIndex] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  const [ayahNumber, setAyahNumber] = useState(null)
+  const [ayahNumber, setAyahNumber] = useState(null);
   const soundRef = useRef(null);
-
 
   useEffect(() => {
     loadAyah(currentAyahIndex);
@@ -38,7 +43,8 @@ const SurahPlayer = ({route, navigation}) => {
       interval = setInterval(() => {
         soundRef.current.getCurrentTime(time => {
           setCurrentTime(time);
-          if (time >= duration - 1) { // Slight buffer to ensure smooth transition
+          if (time >= duration - 1) {
+            // Slight buffer to ensure smooth transition
             nextAyah();
           }
         });
@@ -51,19 +57,21 @@ const SurahPlayer = ({route, navigation}) => {
 
   const loadAyah = index => {
     setIsLoading(true);
-    setAyahNumber(items[index].number)
+    !isPlayingWholeSurah && setAyahNumber(items[index].number);
     Sound.setCategory('Playback');
     soundRef.current = new Sound(
-      items[index].audioSecondary[0] || items[index].audio,
-      null,
+      //Stuck here : this first mp3 file is not working , if it start working we can play whole surah
+      'https://cdn.islamic.network/quran/audio-surah/128/ar.abdulbasitmurattal/1.mp3',
+      // "https://cdn.islamic.network/quran/audio/128/ar.alafasy/1.mp3",
+      Sound.MAIN_BUNDLE,
       error => {
         if (error) {
           console.log('Failed to load the sound', error);
           return;
         }
         setIsLoading(false);
-        setDuration(soundRef.current.getDuration());
-        playSound(); // Autoplay the loaded ayah
+        // setDuration(soundRef.current.getDuration());
+        // playSound(); // Autoplay the loaded ayah
       },
     );
   };
@@ -139,30 +147,37 @@ const SurahPlayer = ({route, navigation}) => {
               style={styles.image}
             />
           </View>
-          <View style={{
-            paddingHorizontal: 30,
-             flex: 1,
-             justifyContent: 'center',
-             alignItems: 'center',
-             backgroundColor: 'white',
-          }}>
-            <ScrollingText
-              text={` ${ayahNumber} :AyatNumber || ${name} :AyatName || ${personName} :ReciterName`}
-            />
-            <Text style={{color: 'black', fontSize: 20}}>{items[currentAyahIndex].text}</Text>
-          </View>
-          <View style={styles.controlsContainer}>
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={prevAyah}
-              disabled={currentAyahIndex === 0}>
-              <Icon
-                name="step-backward"
-                type="material"
-                size={30}
-                color="black"
+          {!isPlayingWholeSurah && (
+            <View
+              style={{
+                paddingHorizontal: 30,
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+                backgroundColor: 'white',
+              }}>
+              <ScrollingText
+                text={` ${ayahNumber} :AyatNumber || ${name} :AyatName || ${personName} :ReciterName`}
               />
-            </TouchableOpacity>
+              <Text style={{color: 'black', fontSize: 20}}>
+                {items[currentAyahIndex].text}
+              </Text>
+            </View>
+          )}
+          <View style={styles.controlsContainer}>
+            {!isPlayingWholeSurah && (
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={prevAyah}
+                disabled={currentAyahIndex === 0}>
+                <Icon
+                  name="step-backward"
+                  type="material"
+                  size={30}
+                  color="black"
+                />
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
               style={styles.iconButton}
               onPress={backwardHandler}
@@ -174,7 +189,9 @@ const SurahPlayer = ({route, navigation}) => {
                 color="black"
               />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconButton} onPress={playPauseHandler}>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={playPauseHandler}>
               <Icon
                 name={playing ? 'pause' : 'play'}
                 type="material"
@@ -193,17 +210,19 @@ const SurahPlayer = ({route, navigation}) => {
                 color="black"
               />
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={nextAyah}
-              disabled={currentAyahIndex === items.length - 1}>
-              <Icon
-                name="step-forward"
-                type="material"
-                size={30}
-                color="black"
-              />
-            </TouchableOpacity>
+            {!isPlayingWholeSurah && (
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={nextAyah}
+                disabled={currentAyahIndex === items.length - 1}>
+                <Icon
+                  name="step-forward"
+                  type="material"
+                  size={30}
+                  color="black"
+                />
+              </TouchableOpacity>
+            )}
           </View>
           <Slider
             style={styles.slider}

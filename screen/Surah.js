@@ -13,17 +13,19 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 
 import styles from '../style/styles';
 const Surah = ({route, navigation}) => {
-  // const {ayatNumber, name, id, check, personName} = route.params;
-  // console.log('SurahParams=======>', route.params);
-  const {ayatNumber, name, id, check, personName} = {
-    ayatNumber: 1,
-    check: 'audio',
-    id: 'ar.abdulbasitmurattal',
-    name: 'سُورَةُ ٱلْفَاتِحَةِ',
-    personName: 'عبد الباسط عبد الصمد المرتل',
-  };
+  const {ayatNumber, name, id, check, personName} = route.params;
+ 
   const [ayah, setAyah] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
+  const listenWholeSurah =  () => {
+    
+    navigation.navigate('SurahPlayer', {
+      fullSurahAudioLink: `https://cdn.islamic.network/quran/audio-surah/128/${id}/${ayatNumber}.mp3`,
+      name: name,
+      personName,
+      isPlayingWholeSurah:true
+    })
+  };
   React.useEffect(() => {
     getEdition();
   }, []);
@@ -34,7 +36,7 @@ const Surah = ({route, navigation}) => {
     )
       .then(response => response.json())
       .then(data => data.data.ayahs);
-    console.log('ayahs=========>', ayahs);
+    // console.log('ayahs=========>', ayahs);
     setAyah(ayahs);
     setLoading(false);
   };
@@ -56,28 +58,19 @@ const Surah = ({route, navigation}) => {
           />
         ) : (
           <>
-          {
-             check == 'audio' &&  (
-          
-            <TouchableOpacity
-              style={{
-                height: 60,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-              onPress={() => {
-                navigation.navigate('SurahPlayer', {
-                  items: ayah,
-                  name: name,
-                  personName,
-                });
-              }}
-              >
-              <Text style={{color: 'black', fontWeight: '', fontSize: 25}}>
-                Listen All
-              </Text>
-            </TouchableOpacity>
-             )}
+            {check == 'audio' && (
+              <TouchableOpacity
+                style={{
+                  height: 60,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+                onPress={listenWholeSurah}>
+                <Text style={{color: 'black', fontWeight: '', fontSize: 25}}>
+                  Listen All
+                </Text>
+              </TouchableOpacity>
+            )}
             <FlatList
               data={ayah}
               keyExtractor={(item, index) => {

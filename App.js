@@ -17,8 +17,8 @@ const App = () => {
         screenOptions={{
           headerShown: false,
         }}>
-        <Stack.Screen name="Surah" component={Surah} />
         <Stack.Screen name="Home" component={Home} />
+        <Stack.Screen name="Surah" component={Surah} />
         <Stack.Screen name="Languages" component={Languages} />
         <Stack.Screen name="Quran" component={Quran} />
         <Stack.Screen name="Audio" component={Audio} />
